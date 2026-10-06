@@ -1,29 +1,32 @@
-# 가사로 AI 영상 만들기
+# GPT 가사 영상 만들기
 
-Streamlit entry point: `app.py`. System dependency: `ffmpeg` (packages.txt).
+Streamlit entry point: `app.py`; system dependency: `ffmpeg` (packages.txt).
 
-Lyrics are interpreted into a storyboard by Gemini 2.5 Flash. Each shot is generated
-as an actual 8-second Veo 3.1 video. FFmpeg normalizes and joins shots, removes their
-generated sound, and optionally adds the uploaded song. Output is 720p MP4.
-The existing video/audio merger remains available as a separate mode.
+GPT-4.1 interprets lyrics into a structured storyboard. GPT Image 1 generates or
+edits one image per scene, optionally using a reference photo. FFmpeg applies slow
+zoom and fades, joins the scenes, and adds the uploaded song. Output is 720p MP4.
+This is an animated image montage, not generated actor motion or lip synchronization.
+The existing video/audio merger remains available in a separate mode.
 
 ## Setup
 
-Install requirements and run `streamlit run app.py`. Enter a Gemini API key with
-billing and Veo access in the app's password field. Keys are session-only and are
-never committed or written to disk. GitHub access does not grant Gemini API access.
-No paid generation starts until the explicit video generation button is pressed.
-Review the displayed total generation seconds and official pricing first.
+Install requirements and run `streamlit run app.py`. Supply an OpenAI API key in the
+session password field. Keys are never written to disk or committed. The storyboard
+and image requests use the key's separate API billing. No image calls start until
+the generation button is pressed. Requests use max_retries=0 to avoid automatic
+paid retries. Completed scene images are reused on subsequent button presses.
 
-## Limits and verification
+## Limits and validation
 
-- Up to 320 seconds, generated as ceil(duration/8) independently billed shots.
-- Optional photo is each shot's first frame, not guaranteed identity consistency.
-- The storyboard covers the narrative; exact lyric-to-vocal alignment is not implemented.
-- Audio is encoded to AAC 320k without EQ, compression, normalization or other effects.
-- Operation IDs prevent implicit resubmission while the Streamlit session remains alive.
-- Refresh/server restart can lose in-memory job state. Download completed output promptly.
-- API failures do not fall back to fake or stock footage.
-- Live paid Gemini/Veo generation requires an account key and was not verified during implementation.
+- Up to 320 seconds, one image per 8-second scene.
+- Reference photo identity consistency is not guaranteed.
+- Exact alignment with sung words is not implemented.
+- Audio uses AAC 320k without EQ, compression or normalization.
+- Session refresh/restart can lose job state. Download the result promptly.
+- A failed/timed-out image request may have incurred charges; manual retry may bill again.
+- Local UI, mocked API/resume behavior and FFmpeg tested. Real paid generation is
+  unverified because no API key is available in the execution environment.
 
-Official API reference: https://ai.google.dev/gemini-api/docs/veo
+Official docs:
+https://developers.openai.com/api/docs/guides/structured-outputs
+https://developers.openai.com/api/reference/resources/images/methods/generate
